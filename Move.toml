@@ -1,0 +1,16 @@
+[package]
+name = "vesting"
+version = "1.0.0"
+authors = []
+
+[addresses]
+blockchain = "0xe3fefd29647aa9d4d0a7ef3b6bb5492c773613b721f3363a78dcfb9ee985e666"
+
+[dev-addresses]
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "mainnet"
+subdir = "aptos-framework"
+
+[dev-dependencies]
