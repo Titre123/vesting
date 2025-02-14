@@ -604,18 +604,26 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the current state to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that one stream was created
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract and stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
         let stream = simple_map::borrow(&contract.streams, &user_address);
 
+        // Fast forward time by ~23 days (2000000 seconds), which is before cliff period ends
         timestamp::fast_forward_seconds(stream.start_time + 2000000);
 
+        // Attempt to claim tokens before cliff period ends
         claim(user, amount_to_claim);
 
+        // Get updated state
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that no tokens were claimed (event counter is still 0)
         assert!(event::counter(&state.claimed) == 0, 0);
     }
 
@@ -649,18 +657,26 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the current state to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that one stream was created
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract and stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
         let stream = simple_map::borrow(&contract.streams, &user_address);
 
-        timestamp::fast_forward_seconds(stream.start_time+ 36104000);
+        // Fast forward time past cliff period (36104000 seconds)
+        timestamp::fast_forward_seconds(stream.start_time + 36104000);
 
+        // Attempt to claim with invalid amount (0)
         claim(user, amount_to_claim);
 
+        // Get updated state
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify no tokens were claimed
         assert!(event::counter(&state.claimed) == 0, 0);
     }
 
@@ -739,14 +755,20 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Borrow mutable reference to the vesting contract to modify stream data
         let contract = borrow_global_mut<VestingContract>(expected_resource_account_address);
         let stream = simple_map::borrow_mut(&mut contract.streams, &user_address);
+        // Set claimed amount higher than total amount to test claiming more than available
         stream.claimed_amount = amount + 100;
 
+        // Borrow immutable reference to get stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
         let stream = simple_map::borrow(&contract.streams, &user_address);
+        // Fast forward time by ~1 year + 7 months to test claiming after cliff period
         timestamp::fast_forward_seconds(stream.start_time+ 51104000);
+        // Attempt to claim tokens which should fail since claimed amount > total amount
         claim(user, amount_to_claim);
+        // Verify no claim event was emitted
         let state = borrow_global<State>(expected_resource_account_address);
         assert!(event::counter(&state.claimed) == 0, 0);
     }
@@ -784,18 +806,25 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
 
+        // Get the vesting contract resource and stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
         let stream = simple_map::borrow(&contract.streams, &user_address);
+        // Fast forward time by ~1 year + 4 months (35104000 seconds) from stream start
         timestamp::fast_forward_seconds(stream.start_time+ 35104000);
 
+        // Attempt to claim tokens using a different user (userB) which should fail
         claim(userB, amount_to_claim);
 
+        // Get the state resource again to verify claim status
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify no claims were processed by checking the event counter
         assert!(event::counter(&state.claimed) == 0, 0);
     }
 
@@ -832,17 +861,26 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract resource and stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Fast forward time past the total duration (124417000 > 124416000) to test claiming after vesting period
         timestamp::fast_forward_seconds(stream.start_time + 124417000);
 
+        // Attempt to claim tokens after vesting period has ended
         claim(user, amount_to_claim);
 
+        // Get updated state to verify claim
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that no claim event was emitted (should fail since duration is invalid)
         assert!(event::counter(&state.claimed) == 0, 0);
     }
 
@@ -874,19 +912,26 @@ module blockchain::vesting {
 
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
-
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
 
+        // Get the vesting contract resource and stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Fast forward time to exactly when cliff period ends (31104000 seconds after start)
         timestamp::fast_forward_seconds(stream.start_time + 31104000);
 
+        // Attempt to claim tokens
         claim(user, amount_to_claim);
 
+        // Get updated state to verify claim
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one claim event was emitted
         assert!(event::counter(&state.claimed) == 1, 0);
     }
 
@@ -919,17 +964,26 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract resource and stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Fast forward time to 32104000 seconds after stream start (just after cliff period)
         timestamp::fast_forward_seconds(stream.start_time + 32104000);
 
+        // Attempt to claim tokens
         claim(user, amount_to_claim);
 
+        // Get updated state to verify claim
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one claim event was emitted
         assert!(event::counter(&state.claimed) == 1, 0);
     }
 
@@ -963,14 +1017,25 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract resource to access stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
+
+        // Get the stream details for the user
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Set current time to 22104000 seconds after start (during cliff period)
         let current = stream.start_time + 22104000;
+
+        // Get actual vested amount at current time
         let vested_amount = get_vested_amount(user_address, current);
 
+        // Verify that vested amount is 0 since we're still in cliff period
         assert!(expected_vested_amount == vested_amount, 0)
     }
 
@@ -1002,16 +1067,28 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract resource to access stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
+
+        // Get the stream details for the user
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Set current time to 32104000 seconds after start (slightly after cliff period)
         let current = stream.start_time + 32104000;
+
+        // Calculate expected vested amount at current time without considering cliff
         let expected_vested_amount = calculate_current_vested_without_cliff_amount(amount, stream.start_time, duration, current);
+
+        // Get actual vested amount at current time
         let vested_amount = get_vested_amount(user_address, current);
 
-
+        // Verify that calculated and actual vested amounts match
         assert!(expected_vested_amount == vested_amount, 0)
     }
 
@@ -1043,15 +1120,28 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract resource to access stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
+
+        // Get the stream details for the user
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Set current time to the end of cliff period (start_time + cliff)
         let current = stream.start_time + 31104000;
+
+        // Calculate expected vested amount at the cliff end
         let expected_vested_amount = calculate_current_vested_without_cliff_amount(amount, stream.start_time, duration, current);
+
+        // Get actual vested amount at the cliff end
         let vested_amount = get_vested_amount(user_address, current);
 
+        // Verify that calculated and actual vested amounts match
         assert!(expected_vested_amount == vested_amount, 0)
     }
 
@@ -1083,19 +1173,30 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract resource to access stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
+
+        // Get the stream details for the user
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Set current time to the end of vesting period (start_time + duration)
         let current = stream.start_time + 124416000;
+
+        // Calculate expected vested amount at the end of vesting
         let expected_vested_amount = calculate_current_vested_without_cliff_amount(amount, stream.start_time, duration, current);
+
+        // Get actual vested amount at the end of vesting
         let vested_amount = get_vested_amount(user_address, current);
 
-        debug::print(&expected_vested_amount);
-        debug::print(&vested_amount);
-
+        // Verify that expected and actual vested amounts match
         assert!(expected_vested_amount == vested_amount, 0);
+        // Verify that full amount is vested at the end
         assert!(expected_vested_amount == amount, 0);
     }
 
@@ -1128,18 +1229,32 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract resource to access stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
+
+        // Get the stream details for the user
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Set current time to a point after half the vesting period
         let current = stream.start_time + 104416000;
+
+        // Calculate expected vested amount at the current time
         let expected_vested_amount = calculate_current_vested_without_cliff_amount(amount, stream.start_time, duration, current);
 
+        // Fast forward time to the same point and claim half the tokens
         timestamp::fast_forward_seconds(stream.start_time + 104416000);
         claim(user, 500);
+
+        // Get actual vested amount and verify it matches expected
         let vested_amount = get_vested_amount(user_address, current);
 
+        // Verify the vested amount matches what we calculated
         assert!(expected_vested_amount == vested_amount, 0);
     }
 
@@ -1172,20 +1287,35 @@ module blockchain::vesting {
         // This should fail because amount is 0
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
+
+        // Get the vesting contract resource to access stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
+
+        // Get the stream details for the user
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Set current time to the end of vesting period (start_time + duration)
         let current = stream.start_time + 124416000;
 
+        // Calculate expected vested amount at the end of vesting period
         let expected_vested_amount = calculate_current_vested_without_cliff_amount(amount, stream.start_time, duration, current);
 
+        // Fast forward time to the end of vesting period
         timestamp::fast_forward_seconds(stream.start_time + 124416000);
+
+        // Claim the full vested amount
         claim(user, 1000);
 
+        // Get actual vested amount and verify it matches expected
         let vested_amount = get_vested_amount(user_address, current);
         assert!(expected_vested_amount == vested_amount, 0);
+
+        // Verify that the full amount has vested
         assert!(expected_vested_amount == amount, 0);
     }
 
@@ -1219,15 +1349,26 @@ module blockchain::vesting {
         let cliff = 31104000;
 
         // This should fail because amount is 0
+        // Create a new vesting stream for the user with specified parameters
         create_stream(admin, user_address, amount, duration, cliff);
 
+        // Get the state resource to verify stream creation
         let state = borrow_global<State>(expected_resource_account_address);
 
+        // Verify that exactly one stream was created by checking the event counter
         assert!(event::counter(&state.stream_created) == 1, 0);
 
+        // Get the vesting contract resource to access stream details
         let contract = borrow_global<VestingContract>(expected_resource_account_address);
+
+        // Get the stream details for the user
         let stream = simple_map::borrow(&contract.streams, &user_address);
+
+        // Calculate current timestamp by adding cliff duration to start time
         let current = stream.start_time + 31104000;
+
+        // Try to get vested amount for a different user (userB) which should fail
+        // since they don't have a stream
         let vested_amount = get_vested_amount(user_B_address, current);
         debug::print(&vested_amount)
     }
