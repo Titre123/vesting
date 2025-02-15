@@ -114,6 +114,7 @@ module blockchain::vesting {
     }
 
     // get the vested amount
+    #[view]
     public fun get_vested_amount(
         beneficiary: address,
         current_time: u64
@@ -190,6 +191,7 @@ module blockchain::vesting {
     }
 
     /// View function to get stream details
+    #[view]
     public fun get_stream(
         beneficiary: address
     ): (u64, u64, u64, u64, u64) acquires VestingContract {
@@ -209,7 +211,7 @@ module blockchain::vesting {
     }
 
     /// Check if an address has a vesting stream
-    public fun has_stream(
+    inline fun has_stream(
         beneficiary: address
     ): bool acquires VestingContract {
         let resources_address = account::create_resource_address(&@blockchain, SEED);
